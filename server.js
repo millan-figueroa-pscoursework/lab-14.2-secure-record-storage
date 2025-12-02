@@ -1,13 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const userRouter = require("./routes/userRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
 app.use(express.json());
 
 // use routes
-app.use("/api/user", userRouter);
+app.use("/api/user", userRoutes);
 
 // connect to MongoDB
 mongoose

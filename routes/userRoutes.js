@@ -5,7 +5,7 @@ const {
   registerUser,
   loginUser,
 } = require("../controllers/userController");
-const { authMiddleware, adminOnly } = require("../middlewares/auth");
+const { authMiddleware, adminOnly } = require("../middleware/auth");
 // Router
 const userRouter = express.Router();
 /**
