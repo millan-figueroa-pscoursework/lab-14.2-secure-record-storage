@@ -1,28 +1,43 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
 
-const authMiddleware = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+const secret = process.env.JWT_SECRET;
+const expiration = "2h";
+
+function authMiddleware(req, res, next) {
+  // Allows token to be sent via req.body, req.query, or headers
+  let token = req.body?.token || req.query?.token || req.headers?.authorization;
+
+  // We split the token string into an array and return actual token
+  if (req.headers.authorization) {
+    token = token.split(" ").pop().trim();
+  }
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user;
     next();
-  } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
   }
-};
 
-const adminOnly = (req, res, next) => {
-  // Example check — depends on your User model
-  if (!req.user || !req.user.isAdmin) {
-    return res.status(403).json({ message: "Admin access only" });
+  // If token can be verified, add the decoded user's data to the request so it can be accessed in the resolver
+  try {
+    const { data } = jwt.verify(token, secret, { maxAge: expiration });
+    req.user = data;
+  } catch {
+    console.log("Invalid token");
   }
+
+  // Return the request object so it can be passed to the resolver as `context`
+  //   return req;
   next();
-};
+}
 
-module.exports = { authMiddleware, adminOnly };
+function adminOnly(req, res, next) {
+  if (req.user && req.user.role === "admin") {
+    next(); // User is an admin, proceed
+  } else {
+    res.status(403).json({ message: "Access denied. Admins only." });
+  }
+}
+
+module.exports = {
+  authMiddleware,
+  adminOnly,
+};
